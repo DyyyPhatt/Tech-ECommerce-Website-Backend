@@ -25,6 +25,8 @@ public class User {
 
     private String userImagePublicId;
 
+    private boolean isDeleted = false;
+
     @CreatedDate
     private Date createdAt;
 
@@ -181,5 +183,13 @@ public class User {
 
     public void setUserImagePublicId(String userImagePublicId) {
         this.userImagePublicId = userImagePublicId;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

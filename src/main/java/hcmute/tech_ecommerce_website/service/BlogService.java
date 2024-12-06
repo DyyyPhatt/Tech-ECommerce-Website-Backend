@@ -4,6 +4,7 @@ import hcmute.tech_ecommerce_website.model.Blog;
 import hcmute.tech_ecommerce_website.repository.BlogRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,25 +18,19 @@ public class BlogService {
     private BlogRepository blogRepository;
 
     @Autowired
-    private EmployeeService employeeService;
-
-    @Autowired
     private CloudinaryService cloudinaryService;
 
-
-    @Autowired
-    private BlogCategoryService blogCategoryService;
-
     public List<Blog> getAllBlogs() {
-        return blogRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "publishedDate");
+        return blogRepository.findByIsDeletedFalse(sort);
     }
 
     public Optional<Blog> getBlogById(String id) {
-        return blogRepository.findById(id);
+        return blogRepository.findByIdAndIsDeletedFalse(id);
     }
 
     public List<Blog> searchBlogsByTitle(String title) {
-        return blogRepository.findByTitleContainingIgnoreCase(title);
+        return blogRepository.findByTitleContainingIgnoreCaseAndIsDeletedFalse(title);
     }
 
     public List<Blog> getAllBlogsSorted(String sortOrder, List<String> categoryIds) {
@@ -45,9 +40,10 @@ public class BlogService {
             List<ObjectId> objectIds = categoryIds.stream()
                     .map(ObjectId::new)
                     .collect(Collectors.toList());
-            blogs = blogRepository.findByCategoryIn(objectIds);
+            blogs = blogRepository.findByCategoryInAndIsDeletedFalse(objectIds);
         } else {
-            blogs = blogRepository.findAll();
+            Sort sort = Sort.by(Sort.Direction.DESC, "publishedDate");
+            blogs = blogRepository.findByIsDeletedFalse(sort);
         }
 
         if ("oldest".equals(sortOrder)) {
@@ -59,14 +55,6 @@ public class BlogService {
                     .sorted(Comparator.comparing(Blog::getPublishedDate).reversed())
                     .collect(Collectors.toList());
         }
-    }
-
-    public List<Blog> getBlogsByCategories(List<String> categoryIds) {
-        List<ObjectId> objectIds = categoryIds.stream()
-                .map(ObjectId::new)
-                .collect(Collectors.toList());
-
-        return blogRepository.findByCategoryIn(objectIds);
     }
 
     public Blog createBlog(Blog blog, List<MultipartFile> images) {
@@ -130,8 +118,6 @@ public class BlogService {
         }
     }
 
-
-
     private String getPublicIdFromUrl(String url) {
         String[] urlParts = url.split("/upload/");
         String[] publicIdParts = urlParts[1].split("\\.");
@@ -152,9 +138,8 @@ public class BlogService {
         return blogRepository.save(blog);
     }
 
-
     public void deleteBlog(String id) {
-        Blog blog = blogRepository.findById(id)
+        Blog blog = blogRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new IllegalArgumentException("Blog có id: " + id + " không tìm thấy"));
 
         List<String> publicIds = blog.getBlogImagePublicId();
@@ -163,6 +148,8 @@ public class BlogService {
         } else {
             System.out.println("Không tìm thấy publicIds nào cho blog có id: " + id);
         }
-        blogRepository.delete(blog);
+        blog.setDeleted(true);
+        blog.setUpdatedAt(new Date());
+        blogRepository.save(blog);
     }
 }

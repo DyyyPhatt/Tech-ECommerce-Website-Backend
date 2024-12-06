@@ -41,7 +41,7 @@ public class ProductController {
 
     @GetMapping("/highest-discount")
     public ResponseEntity<List<Product>> getHighestDiscountedProducts() {
-        List<Product> discountedProducts = productService.getProductsWithHighestDiscount(8);
+        List<Product> discountedProducts = productService.getProductsWithHighestDiscount();
         return ResponseEntity.ok(discountedProducts);
     }
 

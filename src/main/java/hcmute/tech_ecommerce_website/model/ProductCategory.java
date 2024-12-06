@@ -21,6 +21,8 @@ public class ProductCategory {
 
     private String productCategoryImagePublicId;
 
+    private boolean isDeleted = false;
+
     public String getId() {
         return id;
     }
@@ -75,5 +77,13 @@ public class ProductCategory {
 
     public void setProductCategoryImagePublicId(String productCategoryImagePublicId) {
         this.productCategoryImagePublicId = productCategoryImagePublicId;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

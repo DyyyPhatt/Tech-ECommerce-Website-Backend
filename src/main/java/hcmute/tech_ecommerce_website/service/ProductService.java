@@ -22,22 +22,10 @@ public class ProductService {
     private ProductRepository productRepository;
 
     @Autowired
-    private BrandRepository brandRepository;
-
-    @Autowired
-    private ProductCategoryRepository categoryRepository;
-
-    @Autowired
-    private ProductConditionRepository conditionRepository;
-
-    @Autowired
     private PriceHistoryRepository priceHistoryRepository;
 
     @Autowired
     private PriceHistoryService priceHistoryService;
-
-    @Autowired
-    private TagRepository tagRepository;
 
     @Autowired
     private CloudinaryService cloudinaryService;
@@ -67,7 +55,7 @@ public class ProductService {
                 sort = Sort.by(Direction.DESC, "createdAt");
         }
 
-        List<Product> products = productRepository.findAll(sort).stream()
+        List<Product> products = productRepository.findByIsDeletedFalse(sort).stream()
                 .filter(product -> {
                     boolean matches = true;
                     if (brandIds != null && !brandIds.isEmpty()) {
@@ -94,17 +82,16 @@ public class ProductService {
         return products;
     }
 
-    public List<Product> getProductsWithHighestDiscount(int limit) {
-        List<Product> products = productRepository.findAll();
+    public List<Product> getProductsWithHighestDiscount() {
+        List<Product> products = productRepository.findByIsDeletedFalse();
         return products.stream()
                 .filter(product -> product.getDiscountPrice() > 0)
                 .sorted(Comparator.comparingDouble(product -> -(product.getPrice() - product.getDiscountPrice())))
-                .limit(limit)
                 .collect(Collectors.toList());
     }
 
     public Optional<Product> getProductById(String id) {
-        return productRepository.findById(id);
+        return productRepository.findByIdAndIsDeletedFalse(id);
     }
 
     public List<Product> searchProducts(String searchTerm) {
@@ -112,7 +99,7 @@ public class ProductService {
     }
 
     public Product findProductById(String productId) {
-        Optional<Product> productOptional = productRepository.findById(productId);
+        Optional<Product> productOptional = productRepository.findByIdAndIsDeletedFalse(productId);
         return productOptional.orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
     }
 
@@ -137,9 +124,17 @@ public class ProductService {
         deleteProductById(productId);
     }
 
-
     public void deleteProductById(String productId) {
-        productRepository.deleteById(productId);
+        if (!ObjectId.isValid(productId)) {
+            throw new IllegalArgumentException("Định dạng ID sản phẩm không hợp lệ.");
+        }
+
+        Product productToDelete = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm có id: " + productId + " không tìm thấy"));
+
+        productToDelete.setDeleted(true);
+        productToDelete.setUpdatedAt(new Date());
+        productRepository.save(productToDelete);
     }
 
     public Product createProduct(Product product, MultipartFile mainImageFile, List<MultipartFile> thumbnailFiles) throws IOException {
@@ -167,8 +162,6 @@ public class ProductService {
         );
         return createdProduct;
     }
-
-
 
     public Product updateProduct(String id, Product updatedProduct) {
         Optional<Product> existingProductOptional = productRepository.findById(id);
@@ -198,6 +191,4 @@ public class ProductService {
             throw new RuntimeException("Không tìm thấy sản phẩm có id: " + id);
         }
     }
-
-
 }

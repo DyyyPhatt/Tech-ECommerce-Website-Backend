@@ -6,6 +6,7 @@ import hcmute.tech_ecommerce_website.repository.BlogCategoryRepository;
 import hcmute.tech_ecommerce_website.repository.BlogRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -22,11 +23,12 @@ public class BlogCategoryService {
     private BlogRepository blogRepository;
 
     public List<BlogCategory> getAllCategories() {
-        return blogCategoryRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return blogCategoryRepository.findByIsDeletedFalse(sort);
     }
 
     public Optional<BlogCategory> getCategoryById(String id) {
-        return blogCategoryRepository.findById(id);
+        return blogCategoryRepository.findByIdAndIsDeletedFalse(id);
     }
 
     public BlogCategory addCategory(BlogCategory newCategory) {
@@ -53,15 +55,10 @@ public class BlogCategoryService {
     }
 
     public void deleteCategory(String id) {
-        if (!blogCategoryRepository.existsById(id)) {
-            throw new IllegalArgumentException("Danh mục có id: " + id + " không tìm thấy");
-        }
+        BlogCategory category = blogCategoryRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new IllegalArgumentException("Danh mục có id: " + id + " không tìm thấy"));
 
-        List<Blog> blogsToDelete = blogRepository.findByCategoryIn(Collections.singletonList(new ObjectId(id)));
-        if (!blogsToDelete.isEmpty()) {
-            blogRepository.deleteAll(blogsToDelete);
-        }
-
-        blogCategoryRepository.deleteById(id);
+        category.setDeleted(true);
+        blogCategoryRepository.save(category);
     }
 }

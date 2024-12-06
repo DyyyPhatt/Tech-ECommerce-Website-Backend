@@ -3,6 +3,7 @@ package hcmute.tech_ecommerce_website.service;
 import hcmute.tech_ecommerce_website.model.Contact;
 import hcmute.tech_ecommerce_website.repository.ContactRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -15,7 +16,8 @@ public class ContactService {
     private ContactRepository contactRepository;
 
     public List<Contact> getAllContacts() {
-        return contactRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return contactRepository.findAll(sort);
     }
 
     public Contact getContactById(String id) {

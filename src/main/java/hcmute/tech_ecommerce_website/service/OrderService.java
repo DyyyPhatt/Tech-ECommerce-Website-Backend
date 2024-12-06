@@ -10,6 +10,7 @@ import hcmute.tech_ecommerce_website.repository.ProductRepository;
 import hcmute.tech_ecommerce_website.repository.UserRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,7 +32,8 @@ public class OrderService {
     private CouponRepository couponRepository;
 
     public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "orderCreatedAt");
+        return orderRepository.findAll(sort);
     }
 
     public Order getOrderById(String id) {
@@ -159,10 +161,11 @@ public class OrderService {
         order.setNotes(order.getNotes() == null ? "" : order.getNotes());
         order.setShippingCost(20000.0);
         order.setTotalAmount(totalItemPrice);
-        order.setStatus("Processing");
+        order.setStatus("Đang xử lý");
 
         double couponDiscount = applyCoupon(order);
 
+        order.setCouponDiscount(couponDiscount);
         order.setTotalAmount(totalItemPrice + order.getShippingCost() - couponDiscount);
 
         return orderRepository.save(order);

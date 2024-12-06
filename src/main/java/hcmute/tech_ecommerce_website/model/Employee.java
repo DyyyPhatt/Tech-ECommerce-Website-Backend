@@ -26,6 +26,8 @@ public class Employee {
     private Date resetTokenExpiration;
     private String verificationToken;
 
+    private boolean isDeleted = false;
+
     public String getVerificationToken() {
         return verificationToken;
     }
@@ -121,5 +123,12 @@ public class Employee {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
-}
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+}

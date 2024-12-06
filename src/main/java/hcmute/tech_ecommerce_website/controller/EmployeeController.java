@@ -18,9 +18,6 @@ public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
     @GetMapping("/all")
     public List<Employee> getAllEmployees() {
         return employeeService.getAllEmployees();
@@ -90,5 +87,4 @@ public class EmployeeController {
         String newPassword = requestBody.get("newPassword");
         return employeeService.resetPassword(token, newPassword);
     }
-
 }

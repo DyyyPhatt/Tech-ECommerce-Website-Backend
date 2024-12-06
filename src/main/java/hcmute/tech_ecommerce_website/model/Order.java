@@ -33,6 +33,8 @@ public class Order {
 
     private String coupon;
 
+    private double couponDiscount;
+
     private double totalAmount;
 
     private String paymentMethod;
@@ -214,6 +216,14 @@ public class Order {
 
     public void setCoupon(String coupon) {
         this.coupon = coupon;
+    }
+
+    public double getCouponDiscount() {
+        return couponDiscount;
+    }
+
+    public void setCouponDiscount(double couponDiscount) {
+        this.couponDiscount = couponDiscount;
     }
 
     public double getTotalAmount() {

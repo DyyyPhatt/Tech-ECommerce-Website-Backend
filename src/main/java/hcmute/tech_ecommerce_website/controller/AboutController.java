@@ -1,7 +1,6 @@
 package hcmute.tech_ecommerce_website.controller;
 
 import hcmute.tech_ecommerce_website.model.About;
-import hcmute.tech_ecommerce_website.model.Brand;
 import hcmute.tech_ecommerce_website.service.AboutService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +56,6 @@ public class AboutController {
             return ResponseEntity.notFound().build();
         }
     }
-
 
     @GetMapping("/search")
     public ResponseEntity<List<About>> searchAbouts(@RequestParam("q") String searchTerm) {

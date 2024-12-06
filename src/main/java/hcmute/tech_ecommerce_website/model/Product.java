@@ -50,6 +50,8 @@ public class Product {
 
     private String thumbnailsPublicId;
 
+    private boolean isDeleted = false;
+
     public String getMainImagePublicId() {
         return mainImagePublicId;
     }
@@ -234,5 +236,13 @@ public class Product {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

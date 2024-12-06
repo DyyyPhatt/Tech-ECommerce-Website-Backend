@@ -107,7 +107,5 @@ public class Advertisement {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
-
-
 }
 

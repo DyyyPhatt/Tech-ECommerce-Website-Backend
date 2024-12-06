@@ -45,12 +45,11 @@ public class BlogCategoryController {
     public ResponseEntity<String> deleteCategory(@PathVariable String id) {
         try {
             blogCategoryService.deleteCategory(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>("Danh mục đã được xóa mềm thành công.", HttpStatus.NO_CONTENT);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return new ResponseEntity<>("Đã xảy ra lỗi không mong muốn", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

@@ -4,6 +4,7 @@ import hcmute.tech_ecommerce_website.model.Brand;
 import hcmute.tech_ecommerce_website.model.Coupon;
 import hcmute.tech_ecommerce_website.repository.CouponRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -17,7 +18,8 @@ public class CouponService {
     private CouponRepository couponRepository;
 
     public List<Coupon> getAllCoupons() {
-        return couponRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return couponRepository.findAll(sort);
     }
     public Optional<Coupon> getCouponById(String id) {
         return couponRepository.findById(id);
@@ -39,7 +41,6 @@ public class CouponService {
 
         return couponRepository.save(coupon);
     }
-
 
     public Coupon updateCoupon(String id, Coupon updatedCoupon) throws Exception {
         Optional<Coupon> existingCoupon = couponRepository.findById(id);
@@ -99,5 +100,4 @@ public class CouponService {
     public List<Coupon> searchCoupons(String searchTerm) {
         return couponRepository.findByCodeContainingIgnoreCase(searchTerm);
     }
-
 }

@@ -1,6 +1,7 @@
 package hcmute.tech_ecommerce_website.service;
 
 import hcmute.tech_ecommerce_website.model.Blog;
+import hcmute.tech_ecommerce_website.model.Brand;
 import hcmute.tech_ecommerce_website.model.Employee;
 import hcmute.tech_ecommerce_website.model.Product;
 import hcmute.tech_ecommerce_website.repository.BlogRepository;
@@ -11,6 +12,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,23 +33,22 @@ public class EmployeeService {
     @Autowired
     private BlogRepository blogRepository;
 
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
     private JavaMailSender mailSender;
 
-
     @Autowired
     private JwtUtil jwtUtil;
 
     public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return employeeRepository.findByIsDeletedFalse(sort);
     }
 
     public Optional<Employee> getEmployeeById(String id) {
-        return employeeRepository.findById(id);
+        return employeeRepository.findByIdAndIsDeletedFalse(id);
     }
 
     public Employee addEmployee(Employee employee) {
@@ -85,23 +86,6 @@ public class EmployeeService {
         }).orElse(null);
     }
 
-
-
-    public void deleteEmployee(String id) {
-        if (!employeeRepository.existsById(id)) {
-            throw new IllegalArgumentException("Nhân viên có id: " + id + " không tìm thấy");
-        }
-
-        ObjectId employeeObjectId = new ObjectId(id);
-        List<Blog> blogsToDelete = blogRepository.findByAuthor(employeeObjectId);
-
-        if (!blogsToDelete.isEmpty()) {
-            blogRepository.deleteAll(blogsToDelete);
-        }
-
-        employeeRepository.deleteById(id);
-    }
-
     public String checkBlogsBeforeDeletingEmployee(String employeeId) {
         if (!employeeRepository.existsById(employeeId)) {
             throw new IllegalArgumentException("Nhân viên có id: " + employeeId + " không tìm thấy");
@@ -117,21 +101,18 @@ public class EmployeeService {
         return null;
     }
 
-
     public void deleteEmployeeWithConfirmation(String employeeId, boolean forceDelete) {
         String confirmationMessage = checkBlogsBeforeDeletingEmployee(employeeId);
+        Employee employeeToDelete = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Nhân viên có id: " + employeeId + " không tìm thấy"));
+
         if (confirmationMessage != null && !forceDelete) {
             throw new IllegalArgumentException(confirmationMessage);
         }
 
-        ObjectId employeeObjectId = new ObjectId(employeeId);
-
-        List<Blog> blogsToDelete = blogRepository.findByAuthor(employeeObjectId);
-        if (!blogsToDelete.isEmpty()) {
-            blogRepository.deleteAll(blogsToDelete);
-        }
-
-        employeeRepository.deleteById(employeeId);
+        employeeToDelete.setDeleted(true);
+        employeeToDelete.setUpdatedAt(new Date());
+        employeeRepository.save(employeeToDelete);
     }
 
     public boolean checkUsernameExistsExceptId(String username, String id) {
@@ -161,11 +142,9 @@ public class EmployeeService {
         ));
     }
 
-
     private String generateEmployeeToken(Employee employee) {
         return jwtUtil.generateEmployeeToken(employee.getId(), employee.getUsername());
     }
-
 
     public ResponseEntity<?> forgotPassword(String email) {
         Employee employee = employeeRepository.findByEmail(email);
@@ -232,8 +211,6 @@ public class EmployeeService {
                 || optionalEmployee.get().getResetTokenExpiration().before(new Date())) {
             return ResponseEntity.badRequest().body("Token không hợp lệ hoặc đã hết hạn.");
         }
-
-
         Employee employee = optionalEmployee.get();
 
         employee.setPassword(new BCryptPasswordEncoder().encode(newPassword));
@@ -243,5 +220,4 @@ public class EmployeeService {
 
         return ResponseEntity.ok("Mật khẩu đã được reset thành công.");
     }
-
 }

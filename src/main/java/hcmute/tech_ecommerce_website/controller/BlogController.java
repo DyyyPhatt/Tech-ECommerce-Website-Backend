@@ -110,7 +110,6 @@ public class BlogController {
         }
     }
 
-
     public static class ImageResponse {
         private String secure_url;
         public ImageResponse(String secure_url) {
@@ -143,9 +142,6 @@ public class BlogController {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy Blog: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi xóa blog: " + e.getMessage());
         }
     }
-
 }

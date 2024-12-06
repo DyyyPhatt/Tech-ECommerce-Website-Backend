@@ -35,6 +35,8 @@ public class Blog {
 
     private String blogImagePublicId;
 
+    private boolean isDeleted = false;
+
     public List<String> getBlogImagePublicId() {
         if (blogImagePublicId == null || blogImagePublicId.isEmpty()) {
             return new ArrayList<>();
@@ -153,5 +155,15 @@ public class Blog {
         this.comments = comments;
     }
 
-}
+    public void setBlogImagePublicId(String blogImagePublicId) {
+        this.blogImagePublicId = blogImagePublicId;
+    }
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+}

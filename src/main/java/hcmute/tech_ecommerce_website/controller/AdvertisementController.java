@@ -34,7 +34,6 @@ public class AdvertisementController {
         return new ResponseEntity<>(updatedAdvertisement, HttpStatus.OK);
     }
 
-
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteAdvertisement(@PathVariable String id) {
         advertisementService.deleteAdvertisement(id);

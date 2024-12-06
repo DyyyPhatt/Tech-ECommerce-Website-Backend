@@ -7,6 +7,7 @@ import hcmute.tech_ecommerce_website.repository.ProductCategoryRepository;
 import hcmute.tech_ecommerce_website.repository.ProductRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,16 +27,15 @@ public class ProductCategoryService {
     @Autowired
     private CloudinaryService cloudinaryService;
 
-
     public List<ProductCategory> getAllCategories() {
-        return productCategoryRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return productCategoryRepository.findByIsDeletedFalse(sort);
     }
 
     public ProductCategory getCategoryById(String id) {
-        return productCategoryRepository.findById(id)
+        return productCategoryRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new IllegalArgumentException("Danh mục có id: " + id + " không tìm thấy"));
     }
-
 
     public ProductCategory addCategory(ProductCategory newCategory, MultipartFile cateImage) {
         newCategory.setCreatedAt(new Date());
@@ -119,13 +119,9 @@ public class ProductCategoryService {
             }
         }
 
-        ObjectId categoryObjectId = new ObjectId(categoryId);
-        List<Product> productsToDelete = productRepository.findByCategory(categoryObjectId);
-        if (!productsToDelete.isEmpty()) {
-            productRepository.deleteAll(productsToDelete);
-        }
-
-        productCategoryRepository.deleteById(categoryId);
+        categoryToDelete.setDeleted(true);
+        categoryToDelete.setUpdatedAt(new Date());
+        productCategoryRepository.save(categoryToDelete);
     }
 
     public boolean isCategoryExists(String name) {
@@ -133,14 +129,7 @@ public class ProductCategoryService {
                 .anyMatch(category -> category.getCateName().equalsIgnoreCase(name));
     }
 
-    public boolean isCategoryNameDuplicate(String id, String name) {
-        return productCategoryRepository.findAll().stream()
-                .filter(category -> !category.getId().equals(id))
-                .anyMatch(category -> category.getCateName().equalsIgnoreCase(name));
-    }
-
     public List<ProductCategory> searchCategories(String searchTerm) {
         return productCategoryRepository.findByCateNameContainingIgnoreCase(searchTerm);
     }
-
 }

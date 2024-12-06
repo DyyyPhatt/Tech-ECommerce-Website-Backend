@@ -2,7 +2,9 @@ package hcmute.tech_ecommerce_website.service;
 
 import hcmute.tech_ecommerce_website.model.Advertisement;
 import hcmute.tech_ecommerce_website.repository.AdvertisementRepository;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,11 +39,10 @@ public class AdvertisementService {
         advertisementRepository.deleteById(id);
     }
 
-
     public List<Advertisement> getAllAdvertisements() {
-        return advertisementRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
+        return advertisementRepository.findAll(sort);
     }
-
 
     public Advertisement getAdvertisementById(String id) {
         return advertisementRepository.findById(id)

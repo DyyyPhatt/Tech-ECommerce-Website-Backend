@@ -7,6 +7,7 @@ import hcmute.tech_ecommerce_website.repository.BrandRepository;
 import hcmute.tech_ecommerce_website.repository.ProductRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,12 +28,13 @@ public class BrandService {
     private CloudinaryService cloudinaryService;
 
     public List<Brand> getAllBrands() {
-        return brandRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return brandRepository.findByIsDeletedFalse(sort);
     }
 
     public Brand getBrandById(String id) {
-        return brandRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Thương hiệu có id: " + id + " không tìm thấy"));
+        return brandRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new IllegalArgumentException("Thương hiệu có id: " + id + " không tìm thấy hoặc đã bị xóa."));
     }
 
     public Brand addBrand(Brand newBrand, MultipartFile brandImage) {
@@ -101,13 +103,9 @@ public class BrandService {
             }
         }
 
-        ObjectId brandObjectId = new ObjectId(brandId);
-        List<Product> productsToDelete = productRepository.findByBrand(brandObjectId);
-        if (!productsToDelete.isEmpty()) {
-            productRepository.deleteAll(productsToDelete);
-        }
-
-        brandRepository.deleteById(brandId);
+        brandToDelete.setDeleted(true);
+        brandToDelete.setUpdatedAt(new Date());
+        brandRepository.save(brandToDelete);
     }
 
     public String checkProductsBeforeDeletingBrand(String brandId) {

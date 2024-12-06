@@ -24,6 +24,8 @@ public class Brand {
 
     private String brandImagePublicId;
 
+    private boolean isDeleted = false;
+
     public String getId() {
         return id;
     }
@@ -78,5 +80,13 @@ public class Brand {
 
     public void setBrandImagePublicId(String brandImagePublicId) {
         this.brandImagePublicId = brandImagePublicId;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

@@ -2,17 +2,16 @@ package hcmute.tech_ecommerce_website.service;
 
 import hcmute.tech_ecommerce_website.model.Product;
 import hcmute.tech_ecommerce_website.model.ProductCondition;
-import hcmute.tech_ecommerce_website.model.Tag;
 import hcmute.tech_ecommerce_website.repository.ProductConditionRepository;
 import hcmute.tech_ecommerce_website.repository.ProductRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ProductConditionService {
@@ -23,11 +22,12 @@ public class ProductConditionService {
     private ProductRepository productRepository;
 
     public List<ProductCondition> getAllProductConditions() {
-        return productConditionRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return productConditionRepository.findByIsDeletedFalse(sort);
     }
 
     public ProductCondition getProductConditionById(String id) {
-        return productConditionRepository.findById(id)
+        return productConditionRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tình trạng sản phẩm có id: " + id + " không tìm thấy"));
     }
 
@@ -45,18 +45,6 @@ public class ProductConditionService {
         return productConditionRepository.save(productCondition);
     }
 
-    public void deleteCondtion(String id) {
-        if (!productConditionRepository.existsById(id)) {
-            throw new IllegalArgumentException("Điều kiện có id: " + id + " không tìm thấy");
-        }
-
-        List<Product> productsToDelete = productRepository.findByCondition(new ObjectId(id));
-        if (!productsToDelete.isEmpty()) {
-            productRepository.deleteAll(productsToDelete);
-        }
-
-        productConditionRepository.deleteById(id);
-    }
 
     public String checkProductsBeforeDeletingCondition(String conditionId) {
         if (!productConditionRepository.existsById(conditionId)) {
@@ -74,19 +62,21 @@ public class ProductConditionService {
     }
 
     public void deleteConditionWithConfirmation(String conditionId, boolean forceDelete) {
+        if (!ObjectId.isValid(conditionId)) {
+            throw new IllegalArgumentException("Định dạng ID tình trạng không hợp lệ.");
+        }
+
         String confirmationMessage = checkProductsBeforeDeletingCondition(conditionId);
         if (confirmationMessage != null && !forceDelete) {
             throw new IllegalArgumentException(confirmationMessage);
         }
 
-        ObjectId conditionObjectId = new ObjectId(conditionId);
+        ProductCondition conditionToDelete = productConditionRepository.findById(conditionId)
+                .orElseThrow(() -> new IllegalArgumentException("Tình trạng có id: " + conditionId + " không tìm thấy"));
 
-        List<Product> productsToDelete = productRepository.findByCondition(conditionObjectId);
-        if (!productsToDelete.isEmpty()) {
-            productRepository.deleteAll(productsToDelete);
-        }
-
-        productConditionRepository.deleteById(conditionId);
+        conditionToDelete.setDeleted(true);
+        conditionToDelete.setUpdatedAt(new Date());
+        productConditionRepository.save(conditionToDelete);
     }
 
     public List<ProductCondition> searchConditions(String searchTerm) {

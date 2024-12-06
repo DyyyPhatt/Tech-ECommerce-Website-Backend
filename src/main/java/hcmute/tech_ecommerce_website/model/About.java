@@ -24,6 +24,8 @@ public class About {
     @LastModifiedDate
     private Date updatedAt;
 
+    private boolean isDeleted = false;
+
     public String getId() {
         return id;
     }
@@ -78,6 +80,14 @@ public class About {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public static class Creator {

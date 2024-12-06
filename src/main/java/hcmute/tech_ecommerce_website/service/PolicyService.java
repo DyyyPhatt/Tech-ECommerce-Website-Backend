@@ -3,6 +3,7 @@ package hcmute.tech_ecommerce_website.service;
 import hcmute.tech_ecommerce_website.model.Policy;
 import hcmute.tech_ecommerce_website.repository.PolicyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -14,7 +15,8 @@ public class PolicyService {
     private PolicyRepository policyRepository;
 
     public List<Policy> getAllPolicies() {
-        return policyRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return policyRepository.findAll(sort);
     }
 
     public Policy getPolicyById(String id) {

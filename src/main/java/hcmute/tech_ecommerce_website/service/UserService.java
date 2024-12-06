@@ -1,7 +1,5 @@
 package hcmute.tech_ecommerce_website.service;
 
-import com.cloudinary.utils.ObjectUtils;
-import hcmute.tech_ecommerce_website.model.Brand;
 import hcmute.tech_ecommerce_website.model.User;
 import hcmute.tech_ecommerce_website.repository.UserRepository;
 import hcmute.tech_ecommerce_website.util.JwtUtil;
@@ -9,6 +7,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -33,7 +32,6 @@ public class UserService {
     @Autowired
     private CartService cartService;
 
-
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -46,18 +44,18 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return userRepository.findByIsDeletedFalse(sort);
     }
 
     public User getUserById(String id) {
-        return userRepository.findById(id).orElse(null);
+        return userRepository.findByIdAndIsDeletedFalse(id).orElse(null);
     }
 
     public User addUser(User user) {
         user.setCreatedAt(new Date());
         return userRepository.save(user);
     }
-
 
     public User updateUser(String id, User updatedUser, MultipartFile newImage) {
         User existingUser = userRepository.findById(id)
@@ -88,13 +86,14 @@ public class UserService {
         return userRepository.save(existingUser);
     }
 
-
     public boolean isUsernameExists(String username) {
         return userRepository.findByUsername(username).isPresent();
     }
 
     public void deleteUser(String id) {
         Optional<User> userOptional = userRepository.findById(id);
+        User userToDelete = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Người dùng có id: " + id + " không tìm thấy"));
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
@@ -109,7 +108,9 @@ public class UserService {
 
             cartService.deleteCartByUserId(new ObjectId(user.getId()));
 
-            userRepository.deleteById(id);
+            userToDelete.setDeleted(true);
+            userToDelete.setUpdatedAt(new Date());
+            userRepository.save(userToDelete);
         } else {
             throw new IllegalArgumentException("Người dùng có ID " + id + " không tìm thấy.");
         }
@@ -124,7 +125,39 @@ public class UserService {
     }
 
     public ResponseEntity<?> registerUser(User user) {
-        if (isEmailExists(user.getEmail())) {
+        User existingUser = userRepository.findByEmail(user.getEmail());
+
+        if (existingUser != null) {
+            if (existingUser.isDeleted()) {
+                existingUser.setUsername(user.getUsername());
+                user.setPhone_number("");
+                user.setAddress(new User.Address());
+                user.getAddress().setStreet("");
+                user.getAddress().setCommunes("");
+                user.getAddress().setDistrict("");
+                user.getAddress().setCity("");
+                user.getAddress().setCountry("");
+                existingUser.setDeleted(false);
+                existingUser.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
+                existingUser.setVerificationToken(generateVerificationToken());
+                existingUser.setVerificationExpiry(new Date(System.currentTimeMillis() + 3600 * 1000));
+                userRepository.save(existingUser);
+
+                try {
+                    sendVerificationEmail(existingUser);
+                } catch (MessagingException e) {
+                    e.printStackTrace();
+                    return ResponseEntity.status(500).body("Có lỗi xảy ra khi gửi email xác thực.");
+                }
+
+                String jwtToken = jwtUtil.generateToken(existingUser.getId(), existingUser.getUsername());
+
+                return ResponseEntity.ok(Map.of(
+                        "message", "Tài khoản đã được kích hoạt lại! Vui lòng kiểm tra email để xác thực tài khoản.",
+                        "token", jwtToken
+                ));
+            }
+
             return ResponseEntity.badRequest().body("Email đã tồn tại. Vui lòng sử dụng email khác.");
         }
 
@@ -146,7 +179,7 @@ public class UserService {
 
         String verificationToken = generateVerificationToken();
         user.setVerificationToken(verificationToken);
-        user.setVerificationExpiry(new Date(System.currentTimeMillis() + 3600 * 1000)); // 1 giờ
+        user.setVerificationExpiry(new Date(System.currentTimeMillis() + 3600 * 1000)); // 1 hour
 
         userRepository.save(user);
 
@@ -297,6 +330,10 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email không tồn tại.");
         }
 
+        if (user.isDeleted()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Tài khoản của bạn đã bị xóa.");
+        }
+
         if (!user.isVerified()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Tài khoản của bạn chưa được xác thực. Vui lòng kiểm tra email để xác thực tài khoản.");
         }
@@ -319,6 +356,10 @@ public class UserService {
     public User findOrCreateGoogleUser(String email, String name) {
         User existingUser = userRepository.findByEmail(email);
         if (existingUser != null) {
+            if (existingUser.isDeleted()) {
+                throw new IllegalStateException("Tài khoản của bạn đã bị xóa.");
+            }
+
             if (existingUser.getUsername() == null || existingUser.getUsername().isEmpty()) {
                 existingUser.setUsername(name);
             }

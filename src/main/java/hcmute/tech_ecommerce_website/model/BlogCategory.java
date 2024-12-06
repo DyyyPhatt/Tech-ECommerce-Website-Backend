@@ -4,6 +4,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.Date;
 
 @Document(collection = "BlogCategories")
@@ -18,6 +19,8 @@ public class BlogCategory {
 
     @LastModifiedDate
     private Date updatedAt;
+
+    private boolean isDeleted = false;
 
     public String getId() {
         return id;
@@ -57,5 +60,13 @@ public class BlogCategory {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }
